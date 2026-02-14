@@ -1,0 +1,23 @@
+# Docker Compose override for meeting_markdown_export plugin testing
+# This override modifies the frontend-test dependency and command
+# so we can run unit tests without needing the frontend to be running
+
+services:
+  backend-test:
+    depends_on:
+      db-test:
+        condition: service_started
+      selenium-hub:
+        condition: service_started
+      # Change frontend-test dependency to service_started instead of service_healthy
+      frontend-test:
+        condition: service_started
+      cuprite-chrome:
+        condition: service_started
+
+  # Make frontend-test use a no-op command for unit tests
+  # This prevents it from failing when dependencies aren't installed
+  frontend-test:
+    command: ["tail", "-f", "/dev/null"]
+    healthcheck:
+      disable: true

@@ -1,0 +1,61 @@
+<%= render(
+      Primer::Alpha::Dialog.new(
+        title: t(:label_export_markdown),
+        subtitle: t("meeting.export_markdown_dialog.description"),
+        id: "markdown-export-dialog",
+        size: :medium_portrait
+      )
+    ) do |dialog| %>
+  <% dialog.with_header(variant: :large) %>
+  <% dialog.with_body do %>
+    <%= primer_form_with(
+          url: form_action,
+          method: :get,
+      data: {
+            controller: "meetings--export--form",
+            action: "submit->meetings--export--form#submitForm",
+            "meetings--export--form-job-status-dialog-url-value": job_status_dialog_path("_job_uuid_")
+          },
+          id: "meeting-markdown-export-form"
+        ) do
+          flex_layout do |modal_body|
+            modal_body.with_row(mt: 3) do
+              render(
+                Primer::Alpha::CheckBox.new(
+                  id: "md_include_participants",
+                  name: :participants,
+                  checked: true,
+                  label: t("meeting.export_markdown_dialog.include_participants.label"),
+                  caption: t("meeting.export_markdown_dialog.include_participants.caption"),
+                  visually_hide_label: false
+                )
+              )
+            end
+
+            modal_body.with_row(mt: 3) do
+              render(
+                Primer::Alpha::CheckBox.new(
+                  id: "md_include_outcomes",
+                  name: :outcomes,
+                  checked: false,
+                  label: t("meeting.export_markdown_dialog.include_outcomes.label"),
+                  caption: t("meeting.export_markdown_dialog.include_outcomes.caption"),
+                  visually_hide_label: false
+                )
+              )
+            end
+          end
+        end %>
+  <% end %>
+  <% dialog.with_footer do %>
+    <%= render(Primer::Beta::Button.new(data: { "close-dialog-id": "markdown-export-dialog" })) { t(:button_cancel) } %>
+    <%= render(
+          Primer::Beta::Button.new(
+            scheme: :primary,
+            type: :submit,
+            form: "meeting-markdown-export-form",
+            data: { "close-dialog-id": "markdown-export-dialog" }
+          )
+        ) { t("meeting.export_markdown_dialog.submit_button") } %>
+  <% end %>
+<% end %>
