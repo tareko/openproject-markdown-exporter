@@ -28,21 +28,22 @@
 # See COPYRIGHT and LICENSE files for more details.
 #++
 
-# Add markdown export routes to the meetings resource.
-#
-# IMPORTANT:
-# Use `draw` here, not `prepend`.
-# `prepend` only registers a block to be evaluated on the *next* draw call.
-# In production, routes are generally drawn once at boot, so a `prepend` block
-# declared from this file will never be evaluated and route helpers will be
-# missing.
-Rails.application.routes.draw do
-  resources :projects, only: %i[] do
-    resources :meetings, only: [] do
-      member do
-        get :generate_markdown_dialog
-        get :export_markdown
-      end
-    end
+require_relative "../spec_helper"
+
+RSpec.describe "meetings markdown export routes", type: :routing do
+  it "registers generate_markdown_dialog route helper and route" do
+    expect(Rails.application.routes.url_helpers.instance_methods)
+      .to include(:generate_markdown_dialog_project_meeting_path)
+
+    expect(get("/projects/demo-project/meetings/42/generate_markdown_dialog"))
+      .to route_to(controller: "meetings", action: "generate_markdown_dialog", project_id: "demo-project", id: "42")
+  end
+
+  it "registers export_markdown route helper and route" do
+    expect(Rails.application.routes.url_helpers.instance_methods)
+      .to include(:export_markdown_project_meeting_path)
+
+    expect(get("/projects/demo-project/meetings/42/export_markdown"))
+      .to route_to(controller: "meetings", action: "export_markdown", project_id: "demo-project", id: "42")
   end
 end

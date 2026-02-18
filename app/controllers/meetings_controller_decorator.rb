@@ -46,7 +46,7 @@ module MeetingsControllerDecorator
       end
 
       def export_markdown
-        export = MeetingMarkdownExport.create!
+        export = create_markdown_export!
         job = ::Meetings::MarkdownExportJob.perform_later(
           export: export,
           user: current_user,
@@ -87,6 +87,23 @@ module MeetingsControllerDecorator
         else
           value
         end
+      end
+
+      def create_markdown_export!
+        MeetingMarkdownExport.create!
+      rescue ActiveRecord::StatementInvalid => e
+        raise unless missing_plugin_export_table?(e)
+
+        # Fallback for environments where a separate plugin table is not present.
+        # Persist through the core exports table while keeping the STI type.
+        Export.create!(type: "MeetingMarkdownExport")
+      end
+
+      def missing_plugin_export_table?(error)
+        cause = error.cause
+        return false unless cause.is_a?(PG::UndefinedTable)
+
+        cause.message.include?("meeting_markdown_exports")
       end
     end
   end
