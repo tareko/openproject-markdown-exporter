@@ -94,6 +94,13 @@ RSpec.describe Meetings::MarkdownExportJob do
     expect(job).to have_one_attachment_with_content_type("text/markdown")
   end
 
+  it "uses the core attachment create service" do
+    expect(Attachments::CreateService).to receive(:bypass_allowlist).and_call_original
+
+    job = perform_meeting_export
+    expect(job.job_status).to be_success, job.job_status.message
+  end
+
   it "creates an export with correct filename" do
     job = perform_meeting_export
     attachment = job.status_reference.attachments.first

@@ -78,7 +78,9 @@ module OpenProject
         require_dependency File.join(OpenProject::MeetingMarkdownExport::Engine.root, "app/components/meetings/show_component_decorator")
         require_dependency File.join(OpenProject::MeetingMarkdownExport::Engine.root, "app/components/meetings/header_component_decorator")
 
-        MeetingsController.include(MeetingsControllerDecorator)
+        unless MeetingsController.ancestors.any? { |ancestor| ancestor.name == "MeetingsControllerDecorator" }
+          MeetingsController.include(MeetingsControllerDecorator)
+        end
 
         # Require workers to ensure they are loaded
         require_relative "../../../app/workers/meetings/markdown_exporter"

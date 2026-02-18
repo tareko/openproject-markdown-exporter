@@ -85,10 +85,9 @@ RSpec.describe Meetings::Exports::MarkdownModalDialogComponent, type: :component
     expect(rendered_content).to include("Include outcomes")
   end
 
-  it "has correct form action" do
+  it "posts to the dedicated export endpoint instead of the show markdown format" do
     render_inline(component)
 
-    # Check that the form action is set (without verifying exact path since routes may not be loaded)
-    expect(rendered_content).to match(/action="\/projects\/[\w_]+\/meetings\/\d+\.markdown"/)
+    expect(rendered_content).to match(/action="\/projects\/[\w_]+\/meetings\/\d+\/export_markdown"/)
   end
 end

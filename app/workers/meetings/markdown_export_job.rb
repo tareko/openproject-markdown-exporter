@@ -58,7 +58,7 @@ module Meetings
     def store_attachment(container, file, export_result)
       filename = clean_filename(export_result)
 
-      call = Attachments::CreateWithMarkdownContentTypeService
+      call = Attachments::CreateService
                .bypass_allowlist(user: User.current)
                .call(container:, file:, filename:, description: "")
 

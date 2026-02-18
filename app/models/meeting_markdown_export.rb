@@ -28,16 +28,7 @@
 # See COPYRIGHT and LICENSE files for more details.
 #++
 
-class MeetingMarkdownExport < ApplicationRecord
-  self.table_name = "meeting_markdown_exports"
-
-  has_one(
-    :job_status,
-    -> { where(reference_type: "MeetingMarkdownExport") },
-    class_name: "JobStatus::Status",
-    foreign_key: :reference_id
-  )
-
+class MeetingMarkdownExport < Export
   acts_as_attachable view_permission: :view_meetings,
                      add_permission: :view_meetings,
                      delete_permission: :view_meetings,

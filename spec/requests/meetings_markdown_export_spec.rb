@@ -53,6 +53,22 @@ RSpec.describe "Meetings Markdown Export",
 
       expect(response).to have_http_status(:ok)
     end
+
+    it "does not recurse when Accept header also contains markdown" do
+      get project_meeting_path(project, meeting), headers: { "Accept" => "text/markdown,text/html;q=0.9" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/html")
+    end
+
+    it "stays stable after plugin decorator file is reloaded multiple times" do
+      decorator_path = Rails.root.join("plugins/openproject-markdown-exporter/app/controllers/meetings_controller_decorator.rb")
+
+      10.times { load decorator_path }
+
+      expect { get project_meeting_path(project, meeting) }.not_to raise_error
+      expect(response).to have_http_status(:ok)
+    end
   end
 
   describe "GET #generate_markdown_dialog" do
@@ -79,11 +95,11 @@ RSpec.describe "Meetings Markdown Export",
     end
   end
 
-  describe "GET #export_markdown (markdown format)" do
+  describe "GET #export_markdown" do
     it "creates a markdown export job" do
       expect(Meetings::MarkdownExportJob).to receive(:perform_later).and_call_original
 
-      get project_meeting_path(project, meeting, format: :markdown)
+      get export_markdown_project_meeting_path(project, meeting)
 
       expect(response).to redirect_to(job_status_path(MeetingMarkdownExport.last.job_status.job_id))
     end
@@ -93,7 +109,7 @@ RSpec.describe "Meetings Markdown Export",
         .with(hash_including(options: hash_including(participants: "1", outcomes: "0")))
         .and_call_original
 
-      get project_meeting_path(project, meeting, format: :markdown, participants: "1", outcomes: "0")
+      get export_markdown_project_meeting_path(project, meeting, participants: "1", outcomes: "0")
     end
 
     it "prefers checked checkbox value when both 1 and 0 are submitted for outcomes" do
@@ -102,7 +118,7 @@ RSpec.describe "Meetings Markdown Export",
         .and_call_original
 
       # Simulate Primer checkbox behavior: both checked value "1" and hidden fallback "0" are submitted
-      get project_meeting_path(project, meeting, format: :markdown, outcomes: %w[1 0])
+      get export_markdown_project_meeting_path(project, meeting, outcomes: %w[1 0])
     end
 
     it "prefers checked checkbox value when both 1 and 0 are submitted for participants" do
@@ -111,7 +127,7 @@ RSpec.describe "Meetings Markdown Export",
         .and_call_original
 
       # Simulate Primer checkbox behavior: both checked value "1" and hidden fallback "0" are submitted
-      get project_meeting_path(project, meeting, format: :markdown, participants: %w[1 0])
+      get export_markdown_project_meeting_path(project, meeting, participants: %w[1 0])
     end
 
     it "uses 0 when checkbox is not checked (only 0 submitted)" do
@@ -119,7 +135,7 @@ RSpec.describe "Meetings Markdown Export",
         .with(hash_including(options: hash_including(outcomes: "0")))
         .and_call_original
 
-      get project_meeting_path(project, meeting, format: :markdown, outcomes: "0")
+      get export_markdown_project_meeting_path(project, meeting, outcomes: "0")
     end
 
     context "with outcomes included" do
@@ -137,7 +153,7 @@ RSpec.describe "Meetings Markdown Export",
           Meetings::MarkdownExportJob.new(**kwargs).perform_now
         end
 
-        get project_meeting_path(project, meeting, format: :markdown, outcomes: "1")
+        get export_markdown_project_meeting_path(project, meeting, outcomes: "1")
 
         # Verify the job was called with correct options
         expect(job_args).to include(options: hash_including(outcomes: "1"))
@@ -192,8 +208,23 @@ RSpec.describe "Meetings Markdown Export",
       end
     end
 
+    context "when plugin export table is missing" do
+      it "falls back to core exports table and does not return 500" do
+        undefined_table = PG::UndefinedTable.new("ERROR: relation \"meeting_markdown_exports\" does not exist")
+        error = ActiveRecord::StatementInvalid.new("missing table")
+        allow(error).to receive(:cause).and_return(undefined_table)
+
+        allow(MeetingMarkdownExport).to receive(:create!).and_raise(error)
+        expect(Meetings::MarkdownExportJob).to receive(:perform_later).and_call_original
+
+        get export_markdown_project_meeting_path(project, meeting)
+
+        expect(response).to redirect_to(job_status_path(Export.where(type: "MeetingMarkdownExport").last.job_status.job_id))
+      end
+    end
+
     it "returns not found for missing meeting" do
-      get project_meeting_path(project, id: "999999", format: :markdown)
+      get export_markdown_project_meeting_path(project, id: "999999")
 
       expect(response).to have_http_status(:not_found)
     end

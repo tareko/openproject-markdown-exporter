@@ -155,9 +155,9 @@ run_tests() {
     fi
     
     if [[ -n "$FOCUS_FILE" ]]; then
-        rspec_args="$rspec_args plugins/openproject-meeting-markdown-export/$FOCUS_FILE"
+        rspec_args="$rspec_args plugins/openproject-markdown-exporter/$FOCUS_FILE"
     else
-        rspec_args="$rspec_args plugins/openproject-meeting-markdown-export/spec"
+        rspec_args="$rspec_args plugins/openproject-markdown-exporter/spec"
     fi
     
     # Run tests based on type
@@ -191,24 +191,9 @@ run_tests() {
             ;;
     esac
     
-    # Start backend-test if not running
-    if ! $DOCKER_COMPOSE ps backend-test | grep -q "Up"; then
-        print_info "Starting backend-test container..."
-        # Start backend-test without dependencies
-        $DOCKER_COMPOSE up -d --no-deps backend-test
-        
-        # Wait for backend to be ready
-        print_info "Waiting for backend to be ready..."
-        while ! $DOCKER_COMPOSE logs backend-test 2>&1 | grep -q "Ready for tests"; do
-            sleep 1
-            echo -n "."
-        done
-        echo ""
-    fi
-    
-    # Run tests
-    print_info "Executing: bundle exec rspec $rspec_args"
-    $DOCKER_COMPOSE exec backend-test bundle exec rspec $rspec_args
+    # Run tests in a fresh backend-test container to avoid stale DB sessions and proxy ports
+    print_info "Executing: RAILS_ENV=test bundle exec rspec $rspec_args"
+    $DOCKER_COMPOSE run --rm --no-deps backend-test env RAILS_ENV=test bundle exec rspec $rspec_args
 }
 
 # Function to clean up

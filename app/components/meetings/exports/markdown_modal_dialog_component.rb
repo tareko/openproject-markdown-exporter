@@ -42,7 +42,7 @@ module Meetings
       end
 
       def form_action
-        project_meeting_path(project, meeting, format: :markdown)
+        export_markdown_project_meeting_path(project, meeting)
       end
     end
   end

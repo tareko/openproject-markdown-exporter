@@ -33,22 +33,6 @@ module MeetingsControllerDecorator
     base.class_eval do
       respond_to :markdown
 
-      # Override the show method to handle markdown format
-      def show
-        respond_to do |format|
-          format.pdf { export_pdf }
-          format.markdown { export_markdown }
-          format.html do
-            html_title "#{t(:label_meeting)}: #{@meeting.title}"
-            if @meeting.state == "cancelled"
-              render_404
-            else
-              render(Meetings::ShowComponent.new(meeting: @meeting), layout: true)
-            end
-          end
-        end
-      end
-
       def generate_markdown_dialog
         respond_to do |format|
           format.turbo_stream do
@@ -107,5 +91,3 @@ module MeetingsControllerDecorator
     end
   end
 end
-
-MeetingsController.include(MeetingsControllerDecorator)
