@@ -32,7 +32,9 @@ module Meetings
   class MarkdownExportsController < ApplicationController
     respond_to :markdown
 
-    skip_before_action :load_and_authorize_in_optional_project, only: %i[generate_markdown_dialog export_markdown]
+    skip_before_action :load_and_authorize_in_optional_project,
+                       only: %i[generate_markdown_dialog export_markdown],
+                       raise: false
     load_and_authorize_with_permission_in_project :view_meetings,
                                                   only: %i[generate_markdown_dialog export_markdown]
 
