@@ -30,7 +30,7 @@
 
 Gem::Specification.new do |s|
   s.name        = "openproject-meeting_markdown_export"
-  s.version     = "1.0.0"
+  s.version     = "1.0.1"
   s.authors     = "Tarek Loubani"
   s.email       = "shopping@tarek.org"
   s.summary     = "OpenProject Meeting Markdown Export"
